@@ -6,6 +6,7 @@ import matplotlib.pyplot as pl
 
 EPOCH_COUNT = 100
 TRAINING_COUNT = 1000
+GOOD_LAMBDA = 1e-5
 
 def catVector(name):
     retVal = []  
@@ -84,7 +85,9 @@ def lsvm(parsedData):
     x = np.linspace(1,EPOCH_COUNT,EPOCH_COUNT)
     wMag = np.zeros(EPOCH_COUNT)
     errorVals = np.zeros(EPOCH_COUNT)
-    print float(np.shape(validationSet)[0])
+    finalW = []
+    finalB = []
+    
     
     for i in xrange(8):
         print currLambda
@@ -96,6 +99,12 @@ def lsvm(parsedData):
                 
             wMag[j] = np.sqrt(np.dot(w[j],w[j]))
             
+            if currLambda <= GOOD_LAMBDA:
+                finalW = w[j]
+                finalB = b[j]
+            
+            
+            
             currCount = 0
             for k in validationSet:
                 
@@ -103,21 +112,36 @@ def lsvm(parsedData):
                 if (result > 0 and  k[np.size(k)-1] > 0) or (result < 0 and  k[np.size(k)-1] < 0):
                     currCount += 1
                     
+                    
             
             errorVals[j] = float(currCount) / float((np.shape(validationSet)[0]))
-
+        
+        
           
         pl.figure(0)
         pl.plot(x, wMag, label=str(currLambda))
         pl.figure(1)
         pl.plot(x, errorVals, label=str(currLambda))
         currLambda *= 10
-
+            
+    
     pl.figure(1)
     pl.ylim([0,1])    
     pl.legend()
     pl.show()
-            
+    
+    pl.figure(0)
+    pl.legend()
+    pl.show()  
+
+    currCount = 0
+    for k in testSet:
+        result = np.dot(finalW, k[:np.size(k)-1]) + finalB
+        if (result > 0 and  k[np.size(k)-1] > 0) or (result < 0 and  k[np.size(k)-1] < 0):
+            currCount += 1
+    errorVals = float(currCount) / float((np.shape(testSet)[0]))
+    
+    print errorVals     
     
 def parseData(rawData, option):
     
@@ -164,7 +188,7 @@ def parseData(rawData, option):
 
 def main():
     rawData = np.loadtxt('adult.data', dtype = str, delimiter = ", " )
-    parsedData = parseData(rawData, 1)
+    parsedData = parseData(rawData, 2)
     lsvm(parsedData)
 
 
